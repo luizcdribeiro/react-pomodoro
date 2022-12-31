@@ -1,3 +1,4 @@
+import { differenceInSeconds } from 'date-fns'
 import {
   createContext,
   ReactNode,
@@ -39,15 +40,32 @@ export function CyclesContextProvider({
   children,
 }: CyclesContextProviderProps) {
   // useReducer é melhor utilizado quando o estado é complexo e as informações precisam mudar constantemente de varias fontes diferentes
-  const [cyclesState, dispatch] = useReducer(cyclesReducer, {
-    cycles: [],
-    activeCycleId: null,
-  })
-  const [amountSecondsPassed, setAmountSecondsPassed] = useState(0)
+  const [cyclesState, dispatch] = useReducer(
+    cyclesReducer,
+    {
+      cycles: [],
+      activeCycleId: null,
+    },
+    () => {
+      const storedStateAsJSON = localStorage.getItem(
+        '@pomodoro-timer:historico-ciclos-1.0.0',
+      )
+      if (storedStateAsJSON) {
+        return JSON.parse(storedStateAsJSON)
+      }
+    },
+  )
 
   const { cycles, activeCycleId } = cyclesState
 
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId)
+
+  const [amountSecondsPassed, setAmountSecondsPassed] = useState(() => {
+    if (activeCycle) {
+      return differenceInSeconds(new Date(), new Date(activeCycle.startDate))
+    }
+    return 0
+  })
 
   function setSecondsPassed(seconds: number) {
     setAmountSecondsPassed(seconds)
